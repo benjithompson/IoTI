@@ -1,10 +1,10 @@
 from setuptools import setup
 
 setup(
-    name='flaskr',
-    packages=['flaskr'],
+    name='ioti',
+    packages=['ioti'],
     include_package_data=True,
     install_requires=[
-        'flask',
+        'ioti',
     ],
 )
