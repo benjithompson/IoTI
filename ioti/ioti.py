@@ -9,4 +9,4 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
 app = Flask(__name__, instance_path='C:/Code/Python/IoTI/ioti/instance')
 
 app.config.from_object(config.ini)
-
+app.config.from_envvar('IOTI_SETTINGS')
