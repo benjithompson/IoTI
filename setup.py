@@ -1,3 +1,5 @@
+"""Python package setup for IoTI"""
+
 from setuptools import setup
 
 setup(
