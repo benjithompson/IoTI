@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+
 {% block body %}
   {% if session.logged_in %}
     <form action="{{ url_for('add_entry') }}" method=post class=add-entry>
@@ -6,16 +7,26 @@
         <dt>Title:
         <dd><input type=text size=30 name=title>
         <dt>Text:
-        <dd><textarea name=text rows=5 cols=40></textarea>
-        <dd><input type=submit value=Share>
+        <dd><textarea name=text rows=1 cols=40></textarea>
+        <dd><input type=submit value=Submit>
       </dl>
     </form>
   {% endif %}
-  <ul class=entries>
-  {% for entry in entries %}
-    <li><h2>{{ entry.title }}</h2>{{ entry.text|safe }}
-  {% else %}
-    <li><em>Unbelievable.  No entries here so far</em>
-  {% endfor %}
-  </ul>
+  <div class=entries>
+    <ul>
+    {% for entry in entries %}
+      <div class=entry>
+      <li><h3>ID: {{ entry.id }} TITLE: {{ entry.title }} TEXT: {{ entry.text|safe }}</h3>
+        <form action="{{ url_for('remove_entry') }}" method=post class=remove-entry></li>
+      <div class="btn-remove-entry">
+        <button name="id" value="{{entry.id}}" type="submit">X</button>
+      </div>  
+    {% else %}
+      <li><em>No entries here so far</em>
+      </div>
+    {% endfor %}
+    </ul>
+    <div class="clearfix">
+  </div>
+  
 {% endblock %}

@@ -1,7 +1,7 @@
 """Flask API"""
 
 #imports
-import os
+import os, sys
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash
@@ -14,7 +14,7 @@ app.config.update(dict(
     DATABASE=os.path.join(app.root_path, 'ioti.db'),
     SECRET_KEY='development key',
     USERNAME='admin',
-    PASSWORD='default'
+    PASSWORD='admin'
 ))
 
 app.config.from_envvar('IOTI_SETTINGS')
@@ -61,7 +61,7 @@ def close_db(error):
 @app.route('/')
 def show_entries():
     db = get_db()
-    cur = db.execute('select title, text from entries order by id desc')
+    cur = db.execute('select * from entries order by id desc')
     entries = cur.fetchall()
     return render_template('show_entries.html', entries=entries)
 
@@ -69,11 +69,28 @@ def show_entries():
 def add_entry():
     if not session.get('logged_in'):
         abort(401)
+    print('title: ' + request.form['title'] + ' text: ' + request.form['text'], file=sys.stdout, flush=True)
+    if request.form['title'] != '' or request.form['text'] != '':
+        db = get_db()
+        db.execute('insert into entries (title, text) values (?, ?)',
+                   [request.form['title'], request.form['text']])
+        db.commit()
+        flash('New entry was successfully posted')
+    else:
+        flash('Entry Empty')
+    return redirect(url_for('show_entries'))
+
+@app.route('/remove', methods=['POST'])
+def remove_entry():
+    if not session.get('logged_in'):
+        abort(401)
+    print('id: ' + request.form['id'] + ' requested removal from db entry', file=sys.stdout, flush=True)
     db = get_db()
-    db.execute('insert into entries (title, text) values (?, ?)',
-               [request.form['title'], request.form['text']])
+    db.execute('DELETE FROM entries WHERE id = (?)',
+               [request.form['id']])
     db.commit()
-    flash('New entry was successfully posted')
+    
+    flash('Entry was successfully removed')
     return redirect(url_for('show_entries'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -86,12 +103,12 @@ def login():
             error = 'Invalid password'
         else:
             session['logged_in'] = True
-            flash('You were logged in')
+            flash('You were logged in', category='message')
             return redirect(url_for('show_entries'))
     return render_template('login.html', error=error)
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
-    flash('You were logged out')
+    flash('You were logged out', category='message')
     return redirect(url_for('show_entries'))
