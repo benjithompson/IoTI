@@ -4,32 +4,87 @@
 import os, sys
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template, flash
+     render_template, flash, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from marshmallow import Schema, fields, ValidationError, pre_load
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 
 #Load default config and override config from an environment variable
 app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'ioti.db'),
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///ioti.db',
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='admin'
 ))
-
 app.config.from_envvar('IOTI_SETTINGS')
+db = SQLAlchemy(app)
+
+#Models
+class Device(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30), unique=True)
+    desc = db.Column(db.String(120), unique=False)
+
+    # def __init__(self, name, desc):
+    #     self.name = name
+    #     self.desc = desc
+
+    # # def __repr__(self):
+    # #     return '<Devices: name={0.name!r}, desc={0.desc!r}>'.format(self)
+    
+
+#Schema
+class DeviceSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str()
+    desc = fields.Str()
+
+    def format_device(self, device):
+        return "Name: {}, Desc: {}".format(device.name, device.desc)
+ 
+device_schema = DeviceSchema()
+devices_schema = DeviceSchema(many=True)
+
+#===========================================================================
+#API
+
+@app.route('/api/v1.0/devices/', methods=['GET'])
+def devices():
+    devices = Device.query.all()
+    #serialize the queryset
+    result = devices_schema.dump(devices)
+    return jsonify({'devices': result.data})
+
+@app.route('/api/v1.0/devices/<int:id>')
+def device(id):
+    try:
+        device = Device.query.get(id)
+    except IntegrityError:
+        return jsonify({"message": "Device could not be found."}), 400
+    device_result = device_schema.dump(device)
+    return jsonify({'device': device_result.data})
+
+#===========================================================================
+#VIEWS======================================================================
+#===========================================================================
+
+
+@app.route('/api/v1.0/', methods=['GET'])
+def show_api():
+    return render_template('show_api_v1.0.html')
+
+
 
 #===========================================================================
 #INDEX
 @app.route('/')
 def show_index():
-    db = get_db()
-    cur = db.execute('select * from entries order by id desc')
-    entries = cur.fetchall()
     return render_template('index.html')
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login/', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
@@ -40,97 +95,55 @@ def login():
         else:
             session['logged_in'] = True
             flash('You were logged in', category='message')
-            return redirect(url_for('show_entries'))
+            return redirect(url_for('show_devices'))
     return render_template('login.html', error=error)
 
-@app.route('/logout')
+@app.route('/logout/')
 def logout():
     session.pop('logged_in', None)
     flash('You were logged out', category='message')
-    return redirect(url_for('show_entries'))
-
-#===========================================================
-#DB
-def connect_db():
-    """Connects to the specific database"""
-
-    rv = sqlite3.connect(app.config['DATABASE'])
-    rv.row_factory = sqlite3.Row
-    return rv
-
-"""The open_resource() method of the application object is a convenient helper function that will open a
-resource that the application provides.This function opens a file from the resource location (the flaskr/flaskr folder)
-and allows you to read from it. It is used in this example to execute a script on the database connection."""
-def init_db():
-    db = get_db()
-    with ioti.app.open_resource('schema.sql', mode='r') as f:
-        db.cursor().executescript(f.read())
-    db.commit()
-
-"""The app.cli.command() decorator registers a new command with the flask script. When the command executes,
-Flask will automatically create an application context which is bound to the right application. 
-Within the function, you can then access flask.g and other things as you might expect. When the script ends, 
-the application context tears down and the database connection is released."""
-@app.cli.command('initdb')
-def initdb_command():
-    """Initializes the database."""
-    init_db()
-    print('Initialized the database.')
-
-def get_db():
-    """Opens a new database connection if there is none yet for the current application context."""
-    if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = connect_db()
-    return g.sqlite_db
-
-#It’s executed every time the application context tears down:
-@app.teardown_appcontext
-def close_db(error):
-    """Closes the database again at the end of the request."""
-    if hasattr(g, 'sqlite_db'):
-        g.sqlite_db.close()
+    return redirect(url_for('show_devices'))
 
 #===================================================================
-#API
+#devices
 
-@app.route('/api/v1.0/', methods=['GET'])
-def show_api():
-    return redirect(url_for('show_api_v1.0'))
+@app.route('/devices/')
+def show_devices():
+    devices = Device.query.all()
+    result = devices_schema.dump(devices)
+    return render_template('show_devices.html', devices=devices)
 
-#===================================================================
-#ENTRIES
 
-@app.route('/entries')
-def show_entries():
-    db = get_db()
-    cur = db.execute('select * from entries order by id desc')
-    entries = cur.fetchall()
-    return render_template('show_entries.html', entries=entries)
-
-@app.route('/entries/add', methods=['POST'])
-def add_entry():
+#From View
+@app.route('/devices/add', methods=['POST'])
+def add_device():
     if not session.get('logged_in'):
         abort(401)
-    print('title: ' + request.form['title'] + ' text: ' + request.form['text'], file=sys.stdout, flush=True)
-    if request.form['title'] != '' or request.form['text'] != '':
-        db = get_db()
-        db.execute('insert into entries (title, text) values (?, ?)',
-                   [request.form['title'], request.form['text']])
-        db.commit()
+    name = request.form['name']
+    desc = request.form['desc']
+    print('name: \'{}\', desc: \'{}\''.format(name, desc, file=sys.stdout))
+    if request.form['name'] != '' or request.form['desc'] != '':
+        device = Device(name=name, desc=desc)
+        db.session.add(device)
+        db.session.commit()
         flash('New entry was successfully posted')
     else:
         flash('Entry Empty')
-    return redirect(url_for('show_entries'))
+    return redirect(url_for('show_devices'))
 
-@app.route('/entries/remove', methods=['POST'])
-def remove_entry():
+@app.route('/devices/remove', methods=['POST'])
+def remove_device():
     if not session.get('logged_in'):
         abort(401)
-    print('id: ' + request.form['id'] + ' requested removal from db entry', file=sys.stdout, flush=True)
-    db = get_db()
-    db.execute('DELETE FROM entries WHERE id = (?)',
-               [request.form['id']])
-    db.commit()
+    device_id = request.form['id']
+    print('id: ' + device_id + ' requested removal from db entry', file=sys.stdout, flush=True)
+    device = Device.query.get(device_id)
+    db.session.delete(device)
+    db.session.commit()
     
     flash('Entry was successfully removed')
-    return redirect(url_for('show_entries'))
+    return redirect(url_for('show_devices'))
+
+if __name__ == '__main__':
+    db.create_all()
+    app.run(debug=True, port=5000)

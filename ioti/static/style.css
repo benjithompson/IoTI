@@ -18,20 +18,20 @@ h3 {
     width: 35em; 
     border: 5px solid #eee;
     padding: 0.8em; background: white; }
-.entries {
+.devices {
     margin: 5px 10px;
 }
-.entries ul {
+.devices ul {
     height: auto;
 }
-.entries ul li {  
+.devices ul li {  
     width: 25em; 
     margin: 2px;
     float:left;  
     list-style:none;
     border: 2px solid aliceblue; 
 }
-.btn-remove-entry { 
+.btn-remove-device { 
     float:right;
 }
 .clearfix::after {
@@ -39,10 +39,10 @@ h3 {
     clear: both;
     display: table;
 }
-.add-entry { 
+.add-device { 
     font-size: 0.9em; 
     border-bottom: 1px solid #ccc; }
-.add-entry dl { 
+.add-device dl { 
     font-weight: bold; }
 
 .metanav { 
