@@ -19,6 +19,38 @@ app.config.update(dict(
 
 app.config.from_envvar('IOTI_SETTINGS')
 
+#===========================================================================
+#INDEX
+@app.route('/')
+def show_index():
+    db = get_db()
+    cur = db.execute('select * from entries order by id desc')
+    entries = cur.fetchall()
+    return render_template('index.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if request.form['username'] != app.config['USERNAME']:
+            error = 'Invalid username'
+        elif request.form['password'] != app.config['PASSWORD']:
+            error = 'Invalid password'
+        else:
+            session['logged_in'] = True
+            flash('You were logged in', category='message')
+            return redirect(url_for('show_entries'))
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    flash('You were logged out', category='message')
+    return redirect(url_for('show_entries'))
+
+#===========================================================
+#DB
 def connect_db():
     """Connects to the specific database"""
 
@@ -31,7 +63,7 @@ resource that the application provides.This function opens a file from the resou
 and allows you to read from it. It is used in this example to execute a script on the database connection."""
 def init_db():
     db = get_db()
-    with app.open_resource('schema.sql', mode='r') as f:
+    with ioti.app.open_resource('schema.sql', mode='r') as f:
         db.cursor().executescript(f.read())
     db.commit()
 
@@ -58,14 +90,24 @@ def close_db(error):
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
-@app.route('/')
+#===================================================================
+#API
+
+@app.route('/api/v1.0/', methods=['GET'])
+def show_api():
+    return redirect(url_for('show_api_v1.0'))
+
+#===================================================================
+#ENTRIES
+
+@app.route('/entries')
 def show_entries():
     db = get_db()
     cur = db.execute('select * from entries order by id desc')
     entries = cur.fetchall()
     return render_template('show_entries.html', entries=entries)
 
-@app.route('/add', methods=['POST'])
+@app.route('/entries/add', methods=['POST'])
 def add_entry():
     if not session.get('logged_in'):
         abort(401)
@@ -80,7 +122,7 @@ def add_entry():
         flash('Entry Empty')
     return redirect(url_for('show_entries'))
 
-@app.route('/remove', methods=['POST'])
+@app.route('/entries/remove', methods=['POST'])
 def remove_entry():
     if not session.get('logged_in'):
         abort(401)
@@ -91,24 +133,4 @@ def remove_entry():
     db.commit()
     
     flash('Entry was successfully removed')
-    return redirect(url_for('show_entries'))
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    error = None
-    if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME']:
-            error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
-            error = 'Invalid password'
-        else:
-            session['logged_in'] = True
-            flash('You were logged in', category='message')
-            return redirect(url_for('show_entries'))
-    return render_template('login.html', error=error)
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    flash('You were logged out', category='message')
     return redirect(url_for('show_entries'))

@@ -1,4 +1,5 @@
 """init"""
 from .ioti import app
 
-__all__ = ["config", "db", "ioti"]
+
+__all__ = ["config", "ioti"]
