@@ -24,8 +24,14 @@ db = SQLAlchemy(app)
 #Models
 class Device(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(30), unique=True)
+    ipaddress = db.Column(db.String,unique=True)
+    name = db.Column(db.String(30), unique=False)
     desc = db.Column(db.String(120), unique=False)
+    date_added = db.Column(db.String(20), unique=False)
+    owner = db.Column(db.String(20), unique=False)
+    curr_value = db.Column(db.String(30), unique=False)
+
+    # past_data = db.Column(db.relationship('Data', backref='device', lazy='dynamic'))
 
     # def __init__(self, name, desc):
     #     self.name = name
@@ -33,22 +39,37 @@ class Device(db.Model):
 
     # # def __repr__(self):
     # #     return '<Devices: name={0.name!r}, desc={0.desc!r}>'.format(self)
-    
 
+
+# class Data(db.Model):
+#     date =db.Column(db.Integer, primary_key=False)
+#     value = db.Column(db.)
+    
+   
 #Schema
 class DeviceSchema(Schema):
     id = fields.Int(dump_only=True)
+    ipaddress = fields.Str()
     name = fields.Str()
     desc = fields.Str()
+    date_added = fields.DateTime()
+    owner = fields.Str()
+    curr_value = fields.Int()
 
     def format_device(self, device):
-        return "Name: {}, Desc: {}".format(device.name, device.desc)
+        return "id: {}, ip: {}, name: {}, desc: {}, date_added: {}, owner: {}, Curr_value: {}".format(
+                device.id, device.ipaddress, device.name, device.desc, device.date_added, device.owner, device.curr_value)
  
 device_schema = DeviceSchema()
 devices_schema = DeviceSchema(many=True)
 
 #===========================================================================
 #API
+
+@app.route('/api/v1.0/')
+def api_v1():
+    #get meta data on all the version info in api format
+    pass
 
 @app.route('/api/v1.0/devices/', methods=['GET'])
 def devices():
@@ -70,18 +91,19 @@ def device(id):
 #VIEWS======================================================================
 #===========================================================================
 
+@app.route('/api/', methods=['GET'])
+def show_api_home():
+    return render_template('api_v1.0_home.html')
 
-@app.route('/api/v1.0/', methods=['GET'])
-def show_api():
-    return render_template('show_api_v1.0.html')
-
-
+@app.route('/api/help', methods=['GET'])
+def show_api_help():
+    return render_template('api_v1.0_help.html')
 
 #===========================================================================
 #INDEX
 @app.route('/')
 def show_index():
-    return render_template('index.html')
+    return render_template('index.html', heading='Home')
 
 
 @app.route('/login/', methods=['GET', 'POST'])
@@ -95,14 +117,14 @@ def login():
         else:
             session['logged_in'] = True
             flash('You were logged in', category='message')
-            return redirect(url_for('show_devices'))
+            return redirect(url_for('show_index'))
     return render_template('login.html', error=error)
 
 @app.route('/logout/')
 def logout():
     session.pop('logged_in', None)
     flash('You were logged out', category='message')
-    return redirect(url_for('show_devices'))
+    return redirect(url_for('show_index'))
 
 #===================================================================
 #devices
@@ -112,7 +134,6 @@ def show_devices():
     devices = Device.query.all()
     result = devices_schema.dump(devices)
     return render_template('show_devices.html', devices=devices)
-
 
 #From View
 @app.route('/devices/add', methods=['POST'])
@@ -131,7 +152,7 @@ def add_device():
         flash('Entry Empty')
     return redirect(url_for('show_devices'))
 
-@app.route('/devices/remove', methods=['POST'])
+@app.route('/devices/remove/', methods=['POST'])
 def remove_device():
     if not session.get('logged_in'):
         abort(401)
