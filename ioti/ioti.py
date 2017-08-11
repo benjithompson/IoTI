@@ -29,7 +29,7 @@ class Device(db.Model):
     desc = db.Column(db.String(120), unique=False)
     date_added = db.Column(db.String(20), unique=False)
     owner = db.Column(db.String(20), unique=False)
-    curr_value = db.Column(db.String(30), unique=False)
+    val = db.Column(db.String(30), unique=False)
 
     # past_data = db.Column(db.relationship('Data', backref='device', lazy='dynamic'))
 
@@ -54,12 +54,12 @@ class DeviceSchema(Schema):
     desc = fields.Str()
     date_added = fields.DateTime()
     owner = fields.Str()
-    curr_value = fields.Int()
+    val = fields.Int()
 
     def format_device(self, device):
-        return "id: {}, ip: {}, name: {}, desc: {}, date_added: {}, owner: {}, Curr_value: {}".format(
-                device.id, device.ipaddress, device.name, device.desc, device.date_added, device.owner, device.curr_value)
- 
+        return "id: {}, ip: {}, name: {}, desc: {}, date_added: {}, owner: {}, val: {}".format(
+               device.id, device.ipaddress, device.name, device.desc, device.date_added, device.owner, device.val)
+
 device_schema = DeviceSchema()
 devices_schema = DeviceSchema(many=True)
 
@@ -142,9 +142,19 @@ def add_device():
         abort(401)
     name = request.form['name']
     desc = request.form['desc']
+    ipaddress = request.form['ipaddress']
+    date_added = request.form['date_added']
+    owner = request.form['owner']
+    val = request.form['val']
+
     print('name: \'{}\', desc: \'{}\''.format(name, desc, file=sys.stdout))
     if request.form['name'] != '' or request.form['desc'] != '':
-        device = Device(name=name, desc=desc)
+        device = Device(name=name, 
+                        desc=desc, 
+                        ipaddress=ipaddress, 
+                        date_added=date_added, 
+                        owner=owner,
+                        val=val) #historic data table at some point
         db.session.add(device)
         db.session.commit()
         flash('New entry was successfully posted')
@@ -167,4 +177,5 @@ def remove_device():
 
 if __name__ == '__main__':
     db.create_all()
+    db.session.commit()
     app.run(debug=True, port=5000)

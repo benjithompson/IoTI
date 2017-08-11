@@ -7,16 +7,33 @@
         <dt>Name:
         <dd><input type=text size=30 name=name>
         <dt>Desc:
-        <dd><textarea name=desc rows=1 cols=40></textarea>
+        <dd><input type=text size=30 name=desc>
+        <dt>IP:
+        <dd><input type=text size=30 name=ipaddress>
+        <dt>Date:
+        <dd><input type=date size=30 name=date_added>
+        <dt>Owner:
+        <dd><input type=text size=30 name=owner>
+        <dt>Value:
+        <dd><input type=text size=10 name=val>
+
         <dd><input type=submit value=Submit>
       </dl>
     </form>
   {% endif %}
+
   <div class=devices>
     <ul>
     {% for device in devices %}
       <div class=device>
-      <li><h3>ID: {{ device.id }} Name: {{ device.name }} Desc: {{ device.desc|safe }}</h3>
+      <li><h3>ID: {{ device.id }} 
+              IP: {{ device.ipaddress}} 
+              Name: {{ device.name|safe }} 
+              Desc: {{ device.desc|safe }} 
+              Date: {{ device.date_added}} 
+              Owner: {{ device.owner}} 
+              Value: {{ device.val}}</h3>
+
         <form action="{{ url_for('remove_device') }}" method=post class=remove-device></li>
       <div class="btn-remove-device">
         <button name="id" value="{{device.id}}" type="submit">X</button>
