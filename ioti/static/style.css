@@ -4,18 +4,18 @@ body {
 a, h1, h2 { 
     color: #377ba8; }
 h1, h2, h3{ 
-    font-family: 'Georgia', serif; 
+    font-family: serif; 
     margin: 0; }
 h1 { 
     border-bottom: 2px solid #eee; }
 h2 { 
     font-size: 1.2em; }
 h3 {
-    font-size: 1.0em;
+    font-size: 0.8em;
 }
 .page { 
     margin: 2em auto; 
-    width: 35em; 
+    width: 50em; 
     border: 5px solid #eee;
     padding: 0.8em; background: white; }
 .devices {
