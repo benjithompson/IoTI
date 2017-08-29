@@ -68,17 +68,18 @@ devices_schema = DeviceSchema(many=True)
 
 @app.route('/api/v1.0/')
 def api_v1():
-    #get meta data on all the version info in api format
+    """Gets the meta data in json format"""
     pass
 
 @app.route('/api/v1.0/devices/', methods=['GET'])
 def devices():
+    """Get all of the registered devices"""
     devices = Device.query.all()
     #serialize the queryset
     result = devices_schema.dump(devices)
     return jsonify({'devices': result.data})
 
-@app.route('/api/v1.0/devices/<int:id>')
+@app.route('/api/v1.0/devices/<int:id>', methods=['GET'])
 def device(id):
     try:
         device = Device.query.get(id)
