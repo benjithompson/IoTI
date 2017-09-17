@@ -1,0 +1,10 @@
+{% from "auth/formhelpers.html" import render_field %}
+<form method=post>
+  <dl>
+    {{ render_field(form.username) }}
+    {{ render_field(form.password) }}
+    {{ render_field(form.confirm) }}
+    {{ form.hidden_tag() }}
+  </dl>
+  <p><input type=submit value=Register>
+</form>
