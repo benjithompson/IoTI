@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block body %}
+{% from "formhelpers.html" import render_field %}
+{% if current_user.is_authenticated %}
+
+    <form method=post>
+      <dl>
+        {{ render_field(form.name) }}
+        {{ render_field(form.ip) }}
+        {{ render_field(form.category) }}
+        {{ form.hidden_tag() }}
+      </dl>
+      <p><input type=submit value=Submit>
+    </form>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "layout.html" %} 
+{% block body %}
+
+<div class=devices>
+  <ul>
+    {% for device in devices %}
+    <div class=device>
+      <li>
+        <h3>ID:   {{ device.id }} 
+            IP:   {{ device.ip}} 
+            Name: {{ device.name|safe }} 
+            Category: {{ device.category|safe }} 
+            Date: {{ device.date_added }}
+        </h3>
+
+        <form action="{{ url_for('devices.remove_device') }}" method=post class=remove-device>
+      </li>
+      <div class="btn-remove-device">
+        <button name="id" value="{{device.id}}" type="submit">X</button>
+      </div>
+      {% else %}
+      <li><em>No devices added so far</em>
+    </div>
+    {% endfor %}
+    
+  </ul>
+</div>
+<div id=add_device><a href="{{ url_for('devices.add_device') }}">Add Device</a></div>
+
+{% endblock %}

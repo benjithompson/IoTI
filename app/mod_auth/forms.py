@@ -1,4 +1,4 @@
-"""Forms"""
+"""Auth Forms"""
 
 # Import Form and RecaptchaField (optional)
 from flask_wtf import FlaskForm # , RecaptchaField
