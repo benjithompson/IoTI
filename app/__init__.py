@@ -1,10 +1,11 @@
 """Init the app"""
 
 # Import flask and template operators
-from flask import Flask, render_template
-
+from flask import Flask, render_template, redirect, url_for
 # Import SQLAlchemy
 from flask_sqlalchemy import SQLAlchemy
+
+from flask_login import LoginManager
 
 # Define the WSGI application object
 app = Flask(__name__)
@@ -16,10 +17,19 @@ app.config.from_object('config')
 # by modules and controllers
 db = SQLAlchemy(app)
 
+#Init flask login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 # Sample HTTP error handling
 @app.errorhandler(404)
 def not_found(error):
     return render_template('404.html'), 404
+
+# handle login failed
+@app.errorhandler(401)
+def page_not_found(e):
+    return redirect(url_for('auth.signin'))
 
 @app.route('/', methods=['GET'])
 def index():
