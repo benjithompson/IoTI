@@ -9,10 +9,10 @@ from flask import Blueprint, Flask, render_template, session
 # Define the blueprint: 'auth', set its url prefix: app.url/api
 mod_api = Blueprint('api', __name__, url_prefix='/api')
 
-# @app.route('/api/v1.0/')
-# def api_v1():
-#     """Gets the meta data in json format"""
-#     pass
+@mod_api.route('/api/v1.0/')
+def api_v1():
+    """Gets the meta data in json format"""
+    pass
 
 # @app.route('/api/v1.0/devices/', methods=['GET'])
 # def devices():
